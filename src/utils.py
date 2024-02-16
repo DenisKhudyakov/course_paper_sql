@@ -16,21 +16,15 @@ class ConnectBD:
 
     def create_database(self) -> None:
         """Создает новую базу данных."""
-        try:
-            conn = psycopg2.connect(**self.params)
-            conn.autocommit = True
-            cursor = conn.cursor()
-            cursor.execute(f"DROP DATABASE {self.db_name}")
-            cursor.execute(f"CREATE DATABASE {self.db_name}")
-        except psycopg2.errors.InvalidCatalogName:
-            conn = psycopg2.connect(**self.params)
-            conn.autocommit = True
-            cursor = conn.cursor()
-            cursor.execute(f"CREATE DATABASE {self.db_name}")
-        finally:
-            conn.close()
+        conn = psycopg2.connect(**self.params)
+        conn.autocommit = True
+        cursor = conn.cursor()
+        cursor.execute(f"DROP DATABASE IF EXISTS {self.db_name}")
+        cursor.execute(f"CREATE DATABASE {self.db_name}")
+        conn.close()
 
-    def create_data_frame(self, data_base: list[dict[str: Any]]) -> pd.DataFrame:
+    @staticmethod
+    def create_data_frame(data_base: list[dict[str: Any]]) -> pd.DataFrame:
         """Создаем дата фрейм с данными, которые получаем от модуля get_api_data"""
         return pd.DataFrame(data_base)
 
@@ -39,8 +33,10 @@ class ConnectBD:
         engine = create_engine(
             f'postgresql://{self.params['user']}:{self.params['password']}@{self.params['host']}:{self.params['port']}/{self.db_name}'
         )
+        conn = engine.connect()
         df = self.create_data_frame(self.data_base)
-        df.to_sql('vacancy_data', engine)
+        df.to_sql('vacancy_data', con=conn, if_exists='replace', index=False)
+        conn.close()
 
 
 if __name__ == '__main__':
