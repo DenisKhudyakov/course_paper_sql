@@ -19,7 +19,12 @@ class HeadHunterAPI:
         self.page = page
         self.name = name
         self.region = region
-        param = {"page": self.page, "per_page": 100, "text": f"NAME:{self.name}", "area": self.region}
+        param = {
+            "page": self.page,
+            "per_page": 100,
+            "text": f"NAME:{self.name}",
+            "area": self.region,
+        }
         self.response = requests.get(self.url, params=param)
 
     def get_data_vacancy(self):
@@ -41,6 +46,6 @@ class HeadHunterAPI:
         return self.vacancy_list
 
 
-if __name__ == '__main__':
-    data = HeadHunterAPI(0, 'снабжение', '1384')
+if __name__ == "__main__":
+    data = HeadHunterAPI(0, "снабжение", "1384")
     print(data.new_structure())

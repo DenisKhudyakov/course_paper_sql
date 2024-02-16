@@ -5,38 +5,48 @@ from src.get_api_data import HeadHunterAPI
 from src.config import config
 from sqlalchemy import create_engine
 
+
 class ConnectBD:
     """Данный класс преобразует входные данные в DataFrame и отправляет их на БД PostgresSQL"""
 
-    def __init__(self, params: dict):
+    def __init__(self, params: dict, db_name: str, data_base: list[dict[str: Any]]):
         self.params = params
+        self.db_name = db_name
+        self.data_base = data_base
 
-    def create_database(self, db_name: str) -> None:
+    def create_database(self) -> None:
         """Создает новую базу данных."""
-        conn = psycopg2.connect(**self.params)
-        conn.autocommit = True
-        cursor = conn.cursor()
-        cursor.execute(f"DROP DATABASE {db_name}")
-        cursor.execute(f"CREATE DATABASE {db_name}")
+        try:
+            conn = psycopg2.connect(**self.params)
+            conn.autocommit = True
+            cursor = conn.cursor()
+            cursor.execute(f"DROP DATABASE {self.db_name}")
+            cursor.execute(f"CREATE DATABASE {self.db_name}")
+        except psycopg2.errors.InvalidCatalogName:
+            conn = psycopg2.connect(**self.params)
+            conn.autocommit = True
+            cursor = conn.cursor()
+            cursor.execute(f"CREATE DATABASE {self.db_name}")
+        finally:
+            conn.close()
 
-        conn.close()
-
-    def create_data_frame(self, data_base: list[dict[str: Any]]):
+    def create_data_frame(self, data_base: list[dict[str: Any]]) -> pd.DataFrame:
         """Создаем дата фрейм с данными, которые получаем от модуля get_api_data"""
         return pd.DataFrame(data_base)
 
-
-    def upload_dataframe(self):
-        # Ниже только пример
-        engine = create_engine('postgresql://postgres:279211@localhost:5432/north')
-        df1 = pd.read_csv(config.EMPLOYEES)
-        df1.to_sql('employees_data', engine)
-
+    def upload_dataframe(self) -> None:
+        """Функция, которая отправляет дата фрейм в PostgreSQL"""
+        engine = create_engine(
+            f'postgresql://{self.params['user']}:{self.params['password']}@{self.params['host']}:{self.params['port']}/{self.db_name}'
+        )
+        df = self.create_data_frame(self.data_base)
+        df.to_sql('vacancy_data', engine)
 
 
 if __name__ == '__main__':
     data = HeadHunterAPI(0, 'снабжение', '1384')
     data = data.new_structure()
     params = config()
-    new_data = ConnectBD(params)
-    print(new_data.create_data_frame(data))
+    new_data = ConnectBD(params=params, data_base=data, db_name='test_bd')
+    new_data.create_database()
+    new_data.upload_dataframe()
