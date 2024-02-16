@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 import psycopg2
-
+from src.config import config
 
 class AbstractManager(ABC):
     @abstractmethod
@@ -27,25 +27,23 @@ class AbstractManager(ABC):
 class DBManager(AbstractManager):
     """Класс управления базой данных"""
 
-    def __init__(self):
-        pass
+    def __init__(self, params: dict, db_name: str):
+        self.params = params
+        self.db_name = db_name
 
     def get_companies_and_vacancies_count(self):
         """Функция получает список всех компаний и количество вакансий у каждой компании."""
-        conn = psycopg2.connect(dbname=database_name, **params)
+        conn = psycopg2.connect(dbname=self.db_name, **self.params)
         with conn.cursor() as cur:
             cur.execute(
                 """
-                CREATE TABLE channels (
-                    channel_id SERIAL PRIMARY KEY,
-                    title VARCHAR(255) NOT NULL,
-                    views INTEGER,
-                    subscribers INTEGER,
-                    videos INTEGER,
-                    channel_url TEXT
-                )
+                SELECT COUNT("Название специальности"), Работодатель FROM vacancy_data GROUP BY Работодатель
             """
             )
+            rows = cur.fetchall()
+            print('Кол-во | Работодатель')
+            for row in rows:
+                print(f'{row[0]}      | {row[1]}')
             conn.commit()
             conn.close()
         pass
@@ -71,3 +69,9 @@ class DBManager(AbstractManager):
         содержатся переданные в метод слова, например python.
         """
         pass
+
+if __name__ == '__main__':
+    params = config()
+    db_name = 'test_bd'
+    mng = DBManager(params=params, db_name=db_name)
+    mng.get_companies_and_vacancies_count()
