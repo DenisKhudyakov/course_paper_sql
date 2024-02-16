@@ -2,6 +2,7 @@ from abc import ABC, abstractmethod
 import psycopg2
 from src.config import config
 
+
 class AbstractManager(ABC):
     @abstractmethod
     def get_companies_and_vacancies_count(self):
@@ -31,7 +32,7 @@ class DBManager(AbstractManager):
         self.params = params
         self.db_name = db_name
 
-    def get_companies_and_vacancies_count(self):
+    def get_companies_and_vacancies_count(self) -> None:
         """Функция получает список всех компаний и количество вакансий у каждой компании."""
         conn = psycopg2.connect(dbname=self.db_name, **self.params)
         with conn.cursor() as cur:
@@ -41,19 +42,27 @@ class DBManager(AbstractManager):
             """
             )
             rows = cur.fetchall()
-            print('Кол-во | Работодатель')
+            print("Кол-во | Работодатель")
             for row in rows:
-                print(f'{row[0]}      | {row[1]}')
+                print(f"{row[0]}      | {row[1]}")
             conn.commit()
             conn.close()
-        pass
 
-    def get_all_vacancies(self):
+    def get_all_vacancies(self, employer: str) -> None:
         """
         Функция получает список всех вакансий с указанием названия компании,
         названия вакансии и зарплаты и ссылки на вакансию.
         """
-        pass
+        conn = psycopg2.connect(dbname=self.db_name, **self.params)
+        with conn.cursor() as cur:
+            cur.execute(
+                f"SELECT * FROM vacancy_data WHERE Работодатель='{employer}'"
+            )
+            rows = cur.fetchall()
+            for row in rows:
+                print(row)
+            conn.commit()
+            conn.close()
 
     def get_avg_salary(self):
         """Функция получает среднюю зарплату по вакансиям."""
@@ -70,8 +79,10 @@ class DBManager(AbstractManager):
         """
         pass
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     params = config()
-    db_name = 'test_bd'
+    db_name = "test_bd"
     mng = DBManager(params=params, db_name=db_name)
     mng.get_companies_and_vacancies_count()
+    mng.get_all_vacancies("КОНАР")
