@@ -66,11 +66,29 @@ class DBManager(AbstractManager):
 
     def get_avg_salary(self):
         """Функция получает среднюю зарплату по вакансиям."""
-        pass
+        conn = psycopg2.connect(dbname=self.db_name, **self.params)
+        with conn.cursor() as cur:
+            cur.execute(
+                """SELECT AVG("Зарплата от"), AVG("Зарплата до") FROM vacancy_data"""
+            )
+            rows = cur.fetchall()
+            for row in rows:
+                print(f'Средняя зарплата от: {row[0]}, средняя зарплата до: {row[1]}')
+            conn.commit()
+            conn.close()
 
-    def get_vacancies_with_higher_salary(self):
+    def get_vacancies_with_higher_salary(self) -> None:
         """Функция получает список всех вакансий, у которых зарплата выше средней по всем вакансиям."""
-        pass
+        conn = psycopg2.connect(dbname=self.db_name, **self.params)
+        with conn.cursor() as cur:
+            cur.execute(
+                """SELECT * FROM vacancy_data WHERE "Зарплата от" > (SELECT AVG("Зарплата от") FROM vacancy_data);"""
+            )
+            rows = cur.fetchall()
+            for row in rows:
+                print(row)
+            conn.commit()
+            conn.close()
 
     def get_vacancies_with_keyword(self):
         """
@@ -86,3 +104,4 @@ if __name__ == "__main__":
     mng = DBManager(params=params, db_name=db_name)
     mng.get_companies_and_vacancies_count()
     mng.get_all_vacancies("КОНАР")
+    mng.get_avg_salary()
