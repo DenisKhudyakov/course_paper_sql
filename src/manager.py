@@ -90,12 +90,23 @@ class DBManager(AbstractManager):
             conn.commit()
             conn.close()
 
-    def get_vacancies_with_keyword(self):
+    def get_vacancies_with_keyword(self, word: str) -> None:
         """
         Функция получает список всех вакансий, в названии которых
         содержатся переданные в метод слова, например python.
+        :param word: str
+        :return: None
         """
-        pass
+        conn = psycopg2.connect(dbname=self.db_name, **self.params)
+        with conn.cursor() as cur:
+            cur.execute(
+                """SELECT * FROM vacancy_data WHERE "Название специальности" ILIKE '%{word}%';""".format(word=word)
+            )
+            rows = cur.fetchall()
+            for row in rows:
+                print(row)
+            conn.commit()
+            conn.close()
 
 
 if __name__ == "__main__":
@@ -105,3 +116,4 @@ if __name__ == "__main__":
     mng.get_companies_and_vacancies_count()
     mng.get_all_vacancies("КОНАР")
     mng.get_avg_salary()
+    mng.get_vacancies_with_keyword('менеджер')
