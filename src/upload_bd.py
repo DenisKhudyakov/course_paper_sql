@@ -11,14 +11,14 @@ class UploadBD:
         self.params = params
         self.db_name = db_name
 
-    def upload(self, any_data: list, table_name: str) -> None:
+    def upload(self, any_data: list) -> None:
         """Отправка данных"""
         with Connect(params=self.params, db_name=self.db_name) as conn:
             with conn.cursor() as cur:
                 for one_vacancy in any_data:
                     cur.execute(
                         f"""
-                        INSERT INTO {table_name} (specialty, salary_from, salary_to, employer) 
+                        INSERT INTO vacancy_data (specialty, salary_from, salary_to, employer) 
                         VALUES(%s, %s, %s, %s)
                         """,
                         (one_vacancy['Название специальности'], one_vacancy['Зарплата от'], one_vacancy['Зарплата до'],
@@ -32,8 +32,8 @@ class UploadBD:
                 cur.execute(f"""
                             CREATE TABLE vacancy_data (
                                 specialty VARCHAR(255) NOT NULL,
-                                salary_from VARCHAR(100),
-                                salary_to VARCHAR(100),
+                                salary_from INTEGER,
+                                salary_to INTEGER,
                                 employer VARCHAR(255) NOT NULL
                             )
                         """)
@@ -46,4 +46,4 @@ if __name__ == '__main__':
     data = HeadHunterAPI(0, 'снабжение', '1384')
     data = data.new_structure()
     up.create_table()
-    up.upload(any_data=data, table_name='test_table')
+    up.upload(any_data=data)

@@ -1,6 +1,6 @@
 from src.get_api_data import HeadHunterAPI
 from src.config import config
-from src.utils import ConnectBD
+from src.upload_bd import UploadBD
 from src.manager import DBManager
 
 
@@ -11,9 +11,9 @@ def main() -> None:
     specialization = input('Введите название специальности ')
     data = HeadHunterAPI(0, specialization, '1384')
     data = data.new_structure()
-    new_data = ConnectBD(params=params, data_base=data, db_name='test_bd')
-    new_data.create_database()
-    new_data.upload_dataframe()
+    upload = UploadBD(params=params, db_name='test_bd')
+    upload.create_table()
+    upload.upload(any_data=data)
     mng = DBManager(params=params, db_name=db_name)
     mng.get_companies_and_vacancies_count()
     employer = input('Введите название работодателя ')
