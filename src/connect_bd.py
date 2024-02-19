@@ -26,6 +26,6 @@ class Connect:
         try:
             self.conn.commit()
             self.conn.close()
-        except TypeError('У объекта нет атрибута close()') as e:
+        except TypeError("У объекта нет атрибута close()") as e:
             print(e)
             return True

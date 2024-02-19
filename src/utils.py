@@ -1,9 +1,11 @@
+from typing import Any
+
 import pandas as pd
 import psycopg2
-from typing import Any
-from src.get_api_data import HeadHunterAPI
-from src.config import config
 from sqlalchemy import create_engine
+
+from src.config import config
+from src.get_api_data import HeadHunterAPI
 
 
 class ConnectBD:

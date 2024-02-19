@@ -1,5 +1,7 @@
 from abc import ABC, abstractmethod
+
 import psycopg2
+
 from src.config import config
 from src.connect_bd import Connect
 
@@ -46,7 +48,6 @@ class DBManager(AbstractManager):
                 print("Кол-во | Работодатель")
                 for row in rows:
                     print(f"{row[0]}      | {row[1]}")
-                conn.commit()
 
     def get_all_vacancies(self, employer: str) -> None:
         """
@@ -55,13 +56,10 @@ class DBManager(AbstractManager):
         """
         with Connect(params=self.params, db_name=self.db_name) as conn:
             with conn.cursor() as cur:
-                cur.execute(
-                    f"SELECT * FROM vacancy_data WHERE employer='{employer}'"
-                )
+                cur.execute(f"SELECT * FROM vacancy_data WHERE employer='{employer}'")
                 rows = cur.fetchall()
                 for row in rows:
                     print(row)
-                conn.commit()
 
     def get_avg_salary(self):
         """Функция получает среднюю зарплату по вакансиям."""
@@ -72,8 +70,9 @@ class DBManager(AbstractManager):
                 )
                 rows = cur.fetchall()
                 for row in rows:
-                    print(f'Средняя зарплата от: {row[0]}, средняя зарплата до: {row[1]}')
-                conn.commit()
+                    print(
+                        f"Средняя зарплата от: {row[0]}, средняя зарплата до: {row[1]}"
+                    )
 
     def get_vacancies_with_higher_salary(self) -> None:
         """Функция получает список всех вакансий, у которых зарплата выше средней по всем вакансиям."""
@@ -85,7 +84,6 @@ class DBManager(AbstractManager):
                 rows = cur.fetchall()
                 for row in rows:
                     print(row)
-                conn.commit()
 
     def get_vacancies_with_keyword(self, word: str) -> None:
         """
@@ -97,12 +95,13 @@ class DBManager(AbstractManager):
         with Connect(params=self.params, db_name=self.db_name) as conn:
             with conn.cursor() as cur:
                 cur.execute(
-                    """SELECT * FROM vacancy_data WHERE "specialty" ILIKE '%{word}%';""".format(word=word)
+                    """SELECT * FROM vacancy_data WHERE "specialty" ILIKE '%{word}%';""".format(
+                        word=word
+                    )
                 )
                 rows = cur.fetchall()
                 for row in rows:
                     print(row)
-                conn.commit()
 
 
 if __name__ == "__main__":
@@ -112,4 +111,4 @@ if __name__ == "__main__":
     mng.get_companies_and_vacancies_count()
     mng.get_all_vacancies("КОНАР")
     mng.get_avg_salary()
-    mng.get_vacancies_with_keyword('менеджер')
+    mng.get_vacancies_with_keyword("менеджер")
