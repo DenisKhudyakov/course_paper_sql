@@ -48,4 +48,5 @@ class HeadHunterAPI:
 
 if __name__ == "__main__":
     data = HeadHunterAPI(0, "снабжение", "1384")
-    print(data.new_structure())
+    for i in data.new_structure():
+        print(i)
