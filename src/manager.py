@@ -31,11 +31,11 @@ class DBManager(AbstractManager):
     def __init__(self, params: dict, db_name: str):
         self.params = params
         self.db_name = db_name
+        self.conn = psycopg2.connect(dbname=self.db_name, **self.params)
 
     def get_companies_and_vacancies_count(self) -> None:
         """Функция получает список всех компаний и количество вакансий у каждой компании."""
-        conn = psycopg2.connect(dbname=self.db_name, **self.params)
-        with conn.cursor() as cur:
+        with self.conn.cursor() as cur:
             cur.execute(
                 """
                 SELECT COUNT("Название специальности"), Работодатель FROM vacancy_data GROUP BY Работодатель
@@ -45,24 +45,21 @@ class DBManager(AbstractManager):
             print("Кол-во | Работодатель")
             for row in rows:
                 print(f"{row[0]}      | {row[1]}")
-            conn.commit()
-            conn.close()
+            self.conn.commit()
 
     def get_all_vacancies(self, employer: str) -> None:
         """
         Функция получает список всех вакансий с указанием названия компании,
         названия вакансии и зарплаты и ссылки на вакансию.
         """
-        conn = psycopg2.connect(dbname=self.db_name, **self.params)
-        with conn.cursor() as cur:
+        with self.conn.cursor() as cur:
             cur.execute(
                 f"SELECT * FROM vacancy_data WHERE Работодатель='{employer}'"
             )
             rows = cur.fetchall()
             for row in rows:
                 print(row)
-            conn.commit()
-            conn.close()
+            self.conn.commit()
 
     def get_avg_salary(self):
         """Функция получает среднюю зарплату по вакансиям."""
@@ -74,8 +71,7 @@ class DBManager(AbstractManager):
             rows = cur.fetchall()
             for row in rows:
                 print(f'Средняя зарплата от: {row[0]}, средняя зарплата до: {row[1]}')
-            conn.commit()
-            conn.close()
+            self.conn.commit()
 
     def get_vacancies_with_higher_salary(self) -> None:
         """Функция получает список всех вакансий, у которых зарплата выше средней по всем вакансиям."""
@@ -87,8 +83,7 @@ class DBManager(AbstractManager):
             rows = cur.fetchall()
             for row in rows:
                 print(row)
-            conn.commit()
-            conn.close()
+            self.conn.commit()
 
     def get_vacancies_with_keyword(self, word: str) -> None:
         """
@@ -97,16 +92,15 @@ class DBManager(AbstractManager):
         :param word: str
         :return: None
         """
-        conn = psycopg2.connect(dbname=self.db_name, **self.params)
-        with conn.cursor() as cur:
+        with self.conn.cursor() as cur:
             cur.execute(
                 """SELECT * FROM vacancy_data WHERE "Название специальности" ILIKE '%{word}%';""".format(word=word)
             )
             rows = cur.fetchall()
             for row in rows:
                 print(row)
-            conn.commit()
-            conn.close()
+            self.conn.commit()
+
 
 
 if __name__ == "__main__":
