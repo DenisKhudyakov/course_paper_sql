@@ -1,8 +1,8 @@
 from src.config import config
+from src.connect_bd import Connect
 from src.get_api_data import HeadHunterAPI
 from src.manager import DBManager
 from src.upload_bd import UploadBD
-from src.connect_bd import Connect
 
 
 def main() -> None:

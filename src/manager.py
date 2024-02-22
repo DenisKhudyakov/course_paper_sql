@@ -1,10 +1,10 @@
 from abc import ABC, abstractmethod
+from typing import Any
 
 import psycopg2
 
 from src.config import config
 from src.connect_bd import Connect
-from typing import Any
 
 
 class AbstractManager(ABC):
@@ -59,14 +59,10 @@ class DBManager(AbstractManager):
     @staticmethod
     def get_avg_salary(cur: Any):
         """Функция получает среднюю зарплату по вакансиям."""
-        cur.execute(
-            """SELECT AVG("salary_from"), AVG("salary_to") FROM vacancy_data"""
-        )
+        cur.execute("""SELECT AVG("salary_from"), AVG("salary_to") FROM vacancy_data""")
         rows = cur.fetchall()
         for row in rows:
-            print(
-                f"Средняя зарплата от: {row[0]}, средняя зарплата до: {row[1]}"
-            )
+            print(f"Средняя зарплата от: {row[0]}, средняя зарплата до: {row[1]}")
 
     @staticmethod
     def get_vacancies_with_higher_salary(cur: Any) -> None:

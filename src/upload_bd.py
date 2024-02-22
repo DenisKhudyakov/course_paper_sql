@@ -1,7 +1,8 @@
-from src.config import config
 from typing import Any
-from src.get_api_data import HeadHunterAPI
+
+from src.config import config
 from src.connect_bd import Connect
+from src.get_api_data import HeadHunterAPI
 
 
 class UploadBD:
