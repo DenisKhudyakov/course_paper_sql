@@ -1,55 +1,51 @@
 from src.config import config
-from src.connect_bd import Connect
+from typing import Any
 from src.get_api_data import HeadHunterAPI
-import psycopg2
+from src.connect_bd import Connect
 
 
 class UploadBD:
     """Класс отправки"""
 
-    def __init__(self, params: dict, db_name: str) -> None:
-        """конструктор класса UploadBD"""
-        self.params = params
-        self.db_name = db_name
-        self.conn = psycopg2.connect(dbname=self.db_name, **self.params)
-
-    def upload(self, any_data: list) -> None:
+    @staticmethod
+    def upload(any_data: list, cur: Any) -> None:
         """Отправка данных"""
-        with self.conn.cursor() as cur:
-            for one_vacancy in any_data:
-                cur.execute(
-                    f"""
-                    INSERT INTO vacancy_data (specialty, salary_from, salary_to, employer) 
-                    VALUES(%s, %s, %s, %s)
-                    """,
-                    (
-                        one_vacancy["Название специальности"],
-                        one_vacancy["Зарплата от"],
-                        one_vacancy["Зарплата до"],
-                        one_vacancy["Работодатель"],
-                    ),
-                )
-
-    def create_table(self) -> None:
-        """Создание таблицы вакансий"""
-        with self.conn.cursor() as cur:
+        for one_vacancy in any_data:
             cur.execute(
                 f"""
-                CREATE TABLE vacancy_data (
-                specialty VARCHAR(255) NOT NULL,
-                salary_from INTEGER,
-                salary_to INTEGER,
-                employer VARCHAR(255) NOT NULL
-                )
-                """
+                INSERT INTO vacancy_data (specialty, salary_from, salary_to, employer) 
+                VALUES(%s, %s, %s, %s)
+                """,
+                (
+                    one_vacancy["Название специальности"],
+                    one_vacancy["Зарплата от"],
+                    one_vacancy["Зарплата до"],
+                    one_vacancy["Работодатель"],
+                ),
             )
+
+    @staticmethod
+    def create_table(cur: Any) -> None:
+        """Создание таблицы вакансий"""
+        cur.execute(
+            f"""
+            CREATE TABLE vacancy_data (
+            specialty VARCHAR(255) NOT NULL,
+            salary_from INTEGER,
+            salary_to INTEGER,
+            employer VARCHAR(255) NOT NULL
+            )
+            """
+        )
 
 
 if __name__ == "__main__":
     params = config()
     db_name = "test_bd2"
-    up = UploadBD(params=params, db_name=db_name)
+    up = UploadBD()
     data = HeadHunterAPI(0, "снабжение", "1384")
     data = data.new_structure()
-    up.create_table()
-    up.upload(any_data=data)
+    with Connect(params=params, db_name=db_name) as con:
+        with con.cursor() as cur:
+            up.create_table(cur=cur)
+            up.upload(any_data=data, cur=cur)

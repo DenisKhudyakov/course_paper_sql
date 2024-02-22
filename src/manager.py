@@ -4,6 +4,7 @@ import psycopg2
 
 from src.config import config
 from src.connect_bd import Connect
+from typing import Any
 
 
 class AbstractManager(ABC):
@@ -31,83 +32,77 @@ class AbstractManager(ABC):
 class DBManager(AbstractManager):
     """Класс управления базой данных"""
 
-    def __init__(self, params: dict, db_name: str):
-        self.params = params
-        self.db_name = db_name
-        self.conn = psycopg2.connect(dbname=self.db_name, **self.params)
-
-
-    def get_companies_and_vacancies_count(self) -> None:
+    @staticmethod
+    def get_companies_and_vacancies_count(cur: Any) -> None:
         """Функция получает список всех компаний и количество вакансий у каждой компании."""
-        with self.conn.cursor() as cur:
-            cur.execute(
-                """
-                SELECT COUNT("specialty"), employer FROM vacancy_data GROUP BY employer
+        cur.execute(
             """
-            )
-            rows = cur.fetchall()
-            print("Кол-во | Работодатель")
-            for row in rows:
-                print(f"{row[0]}      | {row[1]}")
+            SELECT COUNT("specialty"), employer FROM vacancy_data GROUP BY employer
+        """
+        )
+        rows = cur.fetchall()
+        print("Кол-во | Работодатель")
+        for row in rows:
+            print(f"{row[0]}      | {row[1]}")
 
-    def get_all_vacancies(self, employer: str) -> None:
+    @staticmethod
+    def get_all_vacancies(employer: str, cur) -> None:
         """
         Функция получает список всех вакансий с указанием названия компании,
         названия вакансии и зарплаты и ссылки на вакансию.
         """
-        with self.conn.cursor() as cur:
-            cur.execute(f"SELECT * FROM vacancy_data WHERE employer='{employer}'")
-            rows = cur.fetchall()
-            for row in rows:
-                print(row)
+        cur.execute(f"SELECT * FROM vacancy_data WHERE employer='{employer}'")
+        rows = cur.fetchall()
+        for row in rows:
+            print(row)
 
-    def get_avg_salary(self):
+    @staticmethod
+    def get_avg_salary(cur: Any):
         """Функция получает среднюю зарплату по вакансиям."""
-
-        with self.conn.cursor() as cur:
-            cur.execute(
-                """SELECT AVG("salary_from"), AVG("salary_to") FROM vacancy_data"""
+        cur.execute(
+            """SELECT AVG("salary_from"), AVG("salary_to") FROM vacancy_data"""
+        )
+        rows = cur.fetchall()
+        for row in rows:
+            print(
+                f"Средняя зарплата от: {row[0]}, средняя зарплата до: {row[1]}"
             )
-            rows = cur.fetchall()
-            for row in rows:
-                print(
-                    f"Средняя зарплата от: {row[0]}, средняя зарплата до: {row[1]}"
-                )
 
-    def get_vacancies_with_higher_salary(self) -> None:
+    @staticmethod
+    def get_vacancies_with_higher_salary(cur: Any) -> None:
         """Функция получает список всех вакансий, у которых зарплата выше средней по всем вакансиям."""
+        cur.execute(
+            """SELECT * FROM vacancy_data WHERE "salary_from" > (SELECT AVG("salary_from") FROM vacancy_data);"""
+        )
+        rows = cur.fetchall()
+        for row in rows:
+            print(row)
 
-        with self.conn.cursor() as cur:
-            cur.execute(
-                """SELECT * FROM vacancy_data WHERE "salary_from" > (SELECT AVG("salary_from") FROM vacancy_data);"""
-            )
-            rows = cur.fetchall()
-            for row in rows:
-                print(row)
-
-    def get_vacancies_with_keyword(self, word: str) -> None:
+    @staticmethod
+    def get_vacancies_with_keyword(cur: Any, word: str) -> None:
         """
         Функция получает список всех вакансий, в названии которых
         содержатся переданные в метод слова, например python.
         :param word: str
         :return: None
         """
-        with self.conn.cursor() as cur:
-            cur.execute(
-                """SELECT * FROM vacancy_data WHERE "specialty" ILIKE '%{word}%';""".format(
-                    word=word
-                )
+        cur.execute(
+            """SELECT * FROM vacancy_data WHERE "specialty" ILIKE '%{word}%';""".format(
+                word=word
             )
-            rows = cur.fetchall()
-            for row in rows:
-                print(row)
+        )
+        rows = cur.fetchall()
+        for row in rows:
+            print(row)
 
 
 if __name__ == "__main__":
     params = config()
     db_name = "test_bd2"
-    mng = DBManager(params=params, db_name=db_name)
-    mng.get_companies_and_vacancies_count()
-    mng.get_all_vacancies("КОНАР")
-    mng.get_avg_salary()
-    mng.get_vacancies_with_keyword("менеджер")
+    mng = DBManager()
+    with Connect(params=params, db_name=db_name) as con:
+        with con.cursor() as cur:
+            mng.get_companies_and_vacancies_count(cur)
+            mng.get_all_vacancies("КОНАР", cur)
+            mng.get_avg_salary(cur)
+            mng.get_vacancies_with_keyword(cur, "менеджер")
