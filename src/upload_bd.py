@@ -1,6 +1,7 @@
 from src.config import config
 from src.connect_bd import Connect
 from src.get_api_data import HeadHunterAPI
+import psycopg2
 
 
 class UploadBD:
@@ -10,39 +11,38 @@ class UploadBD:
         """конструктор класса UploadBD"""
         self.params = params
         self.db_name = db_name
+        self.conn = psycopg2.connect(dbname=self.db_name, **self.params)
 
     def upload(self, any_data: list) -> None:
         """Отправка данных"""
-        with Connect(params=self.params, db_name=self.db_name) as conn:
-            with conn.cursor() as cur:
-                for one_vacancy in any_data:
-                    cur.execute(
-                        f"""
-                        INSERT INTO vacancy_data (specialty, salary_from, salary_to, employer) 
-                        VALUES(%s, %s, %s, %s)
-                        """,
-                        (
-                            one_vacancy["Название специальности"],
-                            one_vacancy["Зарплата от"],
-                            one_vacancy["Зарплата до"],
-                            one_vacancy["Работодатель"],
-                        ),
-                    )
+        with self.conn.cursor() as cur:
+            for one_vacancy in any_data:
+                cur.execute(
+                    f"""
+                    INSERT INTO vacancy_data (specialty, salary_from, salary_to, employer) 
+                    VALUES(%s, %s, %s, %s)
+                    """,
+                    (
+                        one_vacancy["Название специальности"],
+                        one_vacancy["Зарплата от"],
+                        one_vacancy["Зарплата до"],
+                        one_vacancy["Работодатель"],
+                    ),
+                )
 
     def create_table(self) -> None:
         """Создание таблицы вакансий"""
-        with Connect(params=self.params, db_name=self.db_name) as conn:
-            with conn.cursor() as cur:
-                cur.execute(
-                    f"""
-                            CREATE TABLE vacancy_data (
-                                specialty VARCHAR(255) NOT NULL,
-                                salary_from INTEGER,
-                                salary_to INTEGER,
-                                employer VARCHAR(255) NOT NULL
-                            )
-                        """
+        with self.conn.cursor() as cur:
+            cur.execute(
+                f"""
+                CREATE TABLE vacancy_data (
+                specialty VARCHAR(255) NOT NULL,
+                salary_from INTEGER,
+                salary_to INTEGER,
+                employer VARCHAR(255) NOT NULL
                 )
+                """
+            )
 
 
 if __name__ == "__main__":

@@ -34,56 +34,56 @@ class DBManager(AbstractManager):
     def __init__(self, params: dict, db_name: str):
         self.params = params
         self.db_name = db_name
+        self.conn = psycopg2.connect(dbname=self.db_name, **self.params)
+
 
     def get_companies_and_vacancies_count(self) -> None:
         """Функция получает список всех компаний и количество вакансий у каждой компании."""
-        with Connect(params=self.params, db_name=self.db_name) as conn:
-            with conn.cursor() as cur:
-                cur.execute(
-                    """
-                    SELECT COUNT("specialty"), employer FROM vacancy_data GROUP BY employer
+        with self.conn.cursor() as cur:
+            cur.execute(
                 """
-                )
-                rows = cur.fetchall()
-                print("Кол-во | Работодатель")
-                for row in rows:
-                    print(f"{row[0]}      | {row[1]}")
+                SELECT COUNT("specialty"), employer FROM vacancy_data GROUP BY employer
+            """
+            )
+            rows = cur.fetchall()
+            print("Кол-во | Работодатель")
+            for row in rows:
+                print(f"{row[0]}      | {row[1]}")
 
     def get_all_vacancies(self, employer: str) -> None:
         """
         Функция получает список всех вакансий с указанием названия компании,
         названия вакансии и зарплаты и ссылки на вакансию.
         """
-        with Connect(params=self.params, db_name=self.db_name) as conn:
-            with conn.cursor() as cur:
-                cur.execute(f"SELECT * FROM vacancy_data WHERE employer='{employer}'")
-                rows = cur.fetchall()
-                for row in rows:
-                    print(row)
+        with self.conn.cursor() as cur:
+            cur.execute(f"SELECT * FROM vacancy_data WHERE employer='{employer}'")
+            rows = cur.fetchall()
+            for row in rows:
+                print(row)
 
     def get_avg_salary(self):
         """Функция получает среднюю зарплату по вакансиям."""
-        with Connect(params=self.params, db_name=self.db_name) as conn:
-            with conn.cursor() as cur:
-                cur.execute(
-                    """SELECT AVG("salary_from"), AVG("salary_to") FROM vacancy_data"""
+
+        with self.conn.cursor() as cur:
+            cur.execute(
+                """SELECT AVG("salary_from"), AVG("salary_to") FROM vacancy_data"""
+            )
+            rows = cur.fetchall()
+            for row in rows:
+                print(
+                    f"Средняя зарплата от: {row[0]}, средняя зарплата до: {row[1]}"
                 )
-                rows = cur.fetchall()
-                for row in rows:
-                    print(
-                        f"Средняя зарплата от: {row[0]}, средняя зарплата до: {row[1]}"
-                    )
 
     def get_vacancies_with_higher_salary(self) -> None:
         """Функция получает список всех вакансий, у которых зарплата выше средней по всем вакансиям."""
-        with Connect(params=self.params, db_name=self.db_name) as conn:
-            with conn.cursor() as cur:
-                cur.execute(
-                    """SELECT * FROM vacancy_data WHERE "salary_from" > (SELECT AVG("salary_from") FROM vacancy_data);"""
-                )
-                rows = cur.fetchall()
-                for row in rows:
-                    print(row)
+
+        with self.conn.cursor() as cur:
+            cur.execute(
+                """SELECT * FROM vacancy_data WHERE "salary_from" > (SELECT AVG("salary_from") FROM vacancy_data);"""
+            )
+            rows = cur.fetchall()
+            for row in rows:
+                print(row)
 
     def get_vacancies_with_keyword(self, word: str) -> None:
         """
@@ -92,16 +92,15 @@ class DBManager(AbstractManager):
         :param word: str
         :return: None
         """
-        with Connect(params=self.params, db_name=self.db_name) as conn:
-            with conn.cursor() as cur:
-                cur.execute(
-                    """SELECT * FROM vacancy_data WHERE "specialty" ILIKE '%{word}%';""".format(
-                        word=word
-                    )
+        with self.conn.cursor() as cur:
+            cur.execute(
+                """SELECT * FROM vacancy_data WHERE "specialty" ILIKE '%{word}%';""".format(
+                    word=word
                 )
-                rows = cur.fetchall()
-                for row in rows:
-                    print(row)
+            )
+            rows = cur.fetchall()
+            for row in rows:
+                print(row)
 
 
 if __name__ == "__main__":
